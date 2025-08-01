@@ -1,31 +1,36 @@
 
-import telebot
-from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+import logging
+from aiogram import Bot, Dispatcher, executor, types
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-BOT_TOKEN = "8361460365:AAF-N4_phWzrRsveQ1tZG8-9xh3oJjo5S5E"
+API_TOKEN = "YOUR_BOT_TOKEN"
 CHANNEL_USERNAME = "@SlivRoomCourses"
-PDF_PATH = "SlivRoom_FreeCourses_Guide.pdf"
 
-bot = telebot.TeleBot(BOT_TOKEN)
+logging.basicConfig(level=logging.INFO)
 
-@bot.message_handler(commands=['start'])
-def start(message):
-    user_id = message.from_user.id
-    chat_id = message.chat.id
+bot = Bot(token=API_TOKEN)
+dp = Dispatcher(bot)
+
+@dp.message_handler(commands=['start'])
+async def send_welcome(message: types.Message):
+    keyboard = InlineKeyboardMarkup(row_width=1)
+    button = InlineKeyboardButton(text="✅ Я підписався", callback_data="check_sub")
+    keyboard.add(button)
+    await message.answer("Привіт! Щоб отримати безкоштовний PDF-гайд, підпишись на наш канал та натисни кнопку нижче.", reply_markup=keyboard)
+
+@dp.callback_query_handler(lambda c: c.data == 'check_sub')
+async def check_subscription(callback_query: types.CallbackQuery):
+    user_id = callback_query.from_user.id
     try:
-        member = bot.get_chat_member(CHANNEL_USERNAME, user_id)
+        member = await bot.get_chat_member(CHANNEL_USERNAME, user_id)
         if member.status in ['member', 'creator', 'administrator']:
-            with open(PDF_PATH, 'rb') as pdf_file:
-                bot.send_document(chat_id, pdf_file, caption="Ось твій PDF-гайд 🎁")
+            await bot.answer_callback_query(callback_query.id)
+            await bot.send_message(user_id, "Ось твій PDF-гайд 🎁:
+https://your_pdf_link_here.com/guide.pdf")
         else:
-            ask_to_subscribe(chat_id)
-    except Exception as e:
-        ask_to_subscribe(chat_id)
+            await bot.answer_callback_query(callback_query.id, text="Спершу підпишись на канал!", show_alert=True)
+    except:
+        await bot.answer_callback_query(callback_query.id, text="Помилка перевірки підписки. Спробуй пізніше.", show_alert=True)
 
-def ask_to_subscribe(chat_id):
-    markup = InlineKeyboardMarkup()
-    btn = InlineKeyboardButton("✅ Підписатись", url=f"https://t.me/{CHANNEL_USERNAME[1:]}")
-    markup.add(btn)
-    bot.send_message(chat_id, "Щоб отримати гайд, підпишись на канал і натисни /start", reply_markup=markup)
-
-bot.polling()
+if __name__ == '__main__':
+    executor.start_polling(dp, skip_updates=True)
