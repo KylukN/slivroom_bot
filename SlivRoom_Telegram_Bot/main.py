@@ -3,7 +3,7 @@ import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 BOT_TOKEN = "8361460365:AAF-N4_phWzrRsveQ1tZG8-9xh3oJjo5S5E"
-CHANNEL_USERNAME = "@SlivRoom"
+CHANNEL_USERNAME = "@SlivRoomCourses"
 PDF_PATH = "SlivRoom_FreeCourses_Guide.pdf"
 
 bot = telebot.TeleBot(BOT_TOKEN)
